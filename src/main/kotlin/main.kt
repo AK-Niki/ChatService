@@ -1,3 +1,4 @@
+import java.util.*
 fun main() {
     val chatService = ChatServiceImpl()
 
@@ -70,31 +71,30 @@ class ChatServiceImpl : ChatService {
     }
 
     override fun getLastMessages(): List<String> {
-        return chats.map { chat ->
-            if (chat.messages.isEmpty()) {
-                "No messages"
-            } else {
-                chat.messages.last().content
-            }
-        }
+        return chats.asSequence()
+            .mapNotNull { chat -> chat.messages.lastOrNull()?.content ?: "Нет сообщений" }
+            .toList()
     }
 
     override fun getMessagesFromChat(chatId: Int, interlocutorId: Int, count: Int): List<Message> {
         val chat = chats.find { it.id == chatId }
-        val messages = chat?.messages?.filter { it.senderId == interlocutorId }?.takeLast(count)
-        messages?.forEach { it.isRead = true }
+        val messages = chat?.messages
+            ?.filter { it.senderId == interlocutorId }
+            ?.asReversed()
+            ?.take(count)
+            ?.onEach { it.isRead = true } // Помечаем сообщения как прочитанные в цепочке
+            ?.toList()
         return messages ?: emptyList()
     }
-
     override fun createMessage(chatId: Int, senderId: Int, content: String): Message {
-        val chat = chats.find { it.id == chatId } ?: throw IllegalArgumentException("Chat not found")
+        val chat = chats.find { it.id == chatId } ?: throw IllegalArgumentException("Чат не найден")
         val message = Message(id = chat.messages.size + 1, senderId = senderId, content = content)
         chat.messages.add(message)
         return message
     }
 
     override fun deleteMessage(chatId: Int, messageId: Int) {
-        val chat = chats.find { it.id == chatId } ?: throw IllegalArgumentException("Chat not found")
+        val chat = chats.find { it.id == chatId } ?: throw IllegalArgumentException("Чат не найден")
         chat.messages.removeIf { it.id == messageId }
     }
 
@@ -108,5 +108,6 @@ class ChatServiceImpl : ChatService {
         chats.removeIf { it.id == chatId }
     }
 }
+
 
 
