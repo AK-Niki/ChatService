@@ -79,11 +79,11 @@ class ChatServiceImpl : ChatService {
     override fun getMessagesFromChat(chatId: Int, interlocutorId: Int, count: Int): List<Message> {
         val chat = chats.find { it.id == chatId }
         val messages = chat?.messages
-            ?.asSequence()
             ?.filter { it.senderId == interlocutorId }
+            ?.asReversed()
+            ?.take(count)
+            ?.onEach { it.isRead = true } // Помечаем сообщения как прочитанные в цепочке
             ?.toList()
-            ?.takeLast(count)
-        messages?.forEach { it.isRead = true }
         return messages ?: emptyList()
     }
     override fun createMessage(chatId: Int, senderId: Int, content: String): Message {
