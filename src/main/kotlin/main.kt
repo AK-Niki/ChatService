@@ -79,8 +79,9 @@ class ChatServiceImpl : ChatService {
     override fun getMessagesFromChat(chatId: Int, interlocutorId: Int, count: Int): List<Message> {
         val chat = chats.find { it.id == chatId }
         val messages = chat?.messages
-            ?.filter { it.senderId == interlocutorId }
             ?.asReversed()
+            ?.asSequence()
+            ?.filter { it.senderId == interlocutorId }
             ?.take(count)
             ?.onEach { it.isRead = true } // Помечаем сообщения как прочитанные в цепочке
             ?.toList()
